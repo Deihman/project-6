@@ -9,8 +9,7 @@ from flask import request
 import arrow  # Replacement for datetime, based on moment.js
 import acp_times  # Brevet time calculations
 import config
-from pymongo import MongoClient
-import pymongo_interface
+
 import os
 
 import logging
@@ -19,15 +18,20 @@ import logging
 # Globals
 ###
 app = flask.Flask(__name__)
-CONFIG = config.configuration()
-client = MongoClient("mongodb://" + os.environ['MONGODB_HOSTNAME'], 27017)
-db = client.brevet
-
-mongo_brevets = db.brevets
 
 ###
 # Pages
 ###
+
+###
+# Undefined functions for first time compilation
+###
+
+def store(arg1, arg2, arg3):
+    pass
+
+def fetch():
+    pass
 
 
 @app.route("/")
@@ -102,7 +106,7 @@ def _submit():
         checkpoints = input_json["checkpoints"]
         app.logger.debug("Data assigned properly")
 
-        checkpoint_id = pymongo_interface.store(brevet_dist_km, start_time, checkpoints, mongo_brevets)
+        checkpoint_id = store(brevet_dist_km, start_time, checkpoints)
         app.logger.debug("checkpoint id grabbed successfully")
 
         return flask.jsonify(
@@ -127,7 +131,7 @@ def _display():
     """
 
     try:
-        brevet_dist_km, start_time, checkpoints = pymongo_interface.fetch(mongo_brevets)
+        brevet_dist_km, start_time, checkpoints = fetch()
         return flask.jsonify(
             result={
                 "brevet_dist_km": brevet_dist_km,
@@ -148,10 +152,10 @@ def _display():
 
 #############
 
-app.debug = CONFIG.DEBUG
+app.debug = os.environ["DEBUG"]
 if app.debug:
     app.logger.setLevel(logging.DEBUG)
 
 if __name__ == "__main__":
-    print("Opening for global access on port {}".format(CONFIG.PORT))
-    app.run(port=CONFIG.PORT, host="0.0.0.0")
+    print("Opening for global access on port {}".format(os.environ["PORT"]))
+    app.run(port=os.environ["PORT"], host="0.0.0.0")
