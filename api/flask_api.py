@@ -8,8 +8,8 @@ import logging
 from mongoengine import connect
 # You need to implement two resources: Brevet and Brevets.
 # Uncomment when done:
-from resources.brevet import Brevet
-from resources.brevets import Brevets
+from resources.brevet import BrevetResource
+from resources.brevets import BrevetsResource
 
 # Connect MongoEngine to mongodb
 connect(host=f"mongodb://{os.environ['MONGODB_HOSTNAME']}:27017/brevetsdb")
@@ -20,6 +20,9 @@ api = Api(app)
 
 # Bind resources to paths here:
 # api.add_resource(...)
+api.add_resource(BrevetResource, "/api/brevet/<_id>")
+api.add_resource(BrevetsResource, "/api/brevets")
+
 app.debug = os.environ["DEBUG"]
 if app.debug:
     app.logger.setLevel(logging.DEBUG)

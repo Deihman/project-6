@@ -8,10 +8,8 @@ import flask
 from flask import request
 import arrow  # Replacement for datetime, based on moment.js
 import acp_times  # Brevet time calculations
-import config
-
+import requests
 import os
-
 import logging
 
 ###
@@ -19,20 +17,30 @@ import logging
 ###
 app = flask.Flask(__name__)
 
-###
-# Pages
-###
+API_ADDR = os.environ["API_ADDR"]
+API_PORT = os.environ["API_PORT"]
+API_URL = f"http://{API_ADDR}:{API_PORT}/api/"
 
 ###
-# Undefined functions for first time compilation
+# API callers
 ###
 
-def store(arg1, arg2, arg3):
-    pass
+def storeBrevets(brevet_dist_km, start_time, checkpoints):
+    _id = requests.post(f"{API_URL}/brevets", json={'length': brevet_dist_km, 
+                                                    'start_time': start_time, 
+                                                    'checkpoints': checkpoints})
+    
+    return _id
 
-def fetch():
-    pass
+def fetchBrevets():
+    brevets = requests.get(f"{API_URL}/brevets").json()
 
+    brevet = brevets[-1]
+    return brevet["length"], brevet["start_time"], brevet["checkpoints"]
+
+###
+# URL watchers
+###
 
 @app.route("/")
 @app.route("/index")
@@ -106,7 +114,7 @@ def _submit():
         checkpoints = input_json["checkpoints"]
         app.logger.debug("Data assigned properly")
 
-        checkpoint_id = store(brevet_dist_km, start_time, checkpoints)
+        checkpoint_id = storeBrevets(brevet_dist_km, start_time, checkpoints)
         app.logger.debug("checkpoint id grabbed successfully")
 
         return flask.jsonify(
@@ -131,7 +139,7 @@ def _display():
     """
 
     try:
-        brevet_dist_km, start_time, checkpoints = fetch()
+        brevet_dist_km, start_time, checkpoints = fetchBrevets()
         return flask.jsonify(
             result={
                 "brevet_dist_km": brevet_dist_km,

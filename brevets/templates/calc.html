@@ -235,8 +235,8 @@
                             if (input_km)
                             {
                                 item_json = {
-                                    "input_km": input_km,
-                                    "input_location": input_location
+                                    "distance": input_km,
+                                    "location": input_location
                                 };
 
                                 checkpoints.push(item_json);
@@ -322,10 +322,10 @@
 
                                         if (index < num_checkpoints)
                                         {
-                                            checkpoint.find("input[name='km']").val(checkpoints[index].input_km);
-                                            checkpoint.find("input[name='location']").val(checkpoints[index].input_location);
+                                            checkpoint.find("input[name='km']").val(checkpoints[index].distance);
+                                            checkpoint.find("input[name='location']").val(checkpoints[index].location);
 
-                                            var km = parseFloat(checkpoints[index].input_km);
+                                            var km = parseFloat(checkpoints[index].distance);
                                             var miles = (0.621371 * km).toFixed(5);
                                             console.log("Converted " + km + " km to " + miles + " miles");
                                             var target = checkpoint.find("input[name='miles']");
