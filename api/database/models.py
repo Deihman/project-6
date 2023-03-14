@@ -11,8 +11,8 @@ class Checkpoint(EmbeddedDocument):
     """
     distance = FloatField(required=True)
     location = StringField()
-    # open time and close time are not necessary, they can be recalculated 
-    # after reinserting the distance and location fields.
+    open_time = StringField(required=True)
+    close_time = StringField(required=True)
 
 
 class Brevet(Document):

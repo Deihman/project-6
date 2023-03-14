@@ -130,63 +130,133 @@
                 });
             }
 
-            /*
-   
-            function submit_data(control)
-            {
-               var km_field = control.find("input[name='km']");
-               var location_field = control.find("input[name='location']");
-               var start_time_field = document.getElementById("begin_date");
-               var brevet_dist_field = document.getElementById('brevet_dist_km');
-   
-               var km = km_field.value;
-               var location = location_field.value;
-               var start_time = start_time_field.value;
-               var brevet_dist = brevet_dist_field.value;
-   
-               console.log("Storing data in mongo");
-   
-               $.getJSON(SUBMIT_URL, {km: km, location: location, start_time: start_time, brevet_dist_km: brevet_dist_km}).done(
-                  function (data)
-                  {
-                     var stored = data.result;
-                     if (stored.stored == "no")
-                     {
-                        console.log("nothing stored");
-                        return;
-                     }
-                     console.log("Data successfully stored");
-                     km_field.val("");
-                     start_time_field.val("");
-                     brevet_dist_field.val("")
-                     location_field.val("");
-                  }
-               );
-            }
-   
-            function display_data(control)
-            {
-               var km_field = control.find("input[name='km']");
-               var location_field = control.find("input[name='location']");
-               var start_time_field = document.getElementById("begin_date");
-               var brevet_dist_field = document.getElementById('brevet_dist_km');
-   
-               console.log("Displaying data from mongo");
-   
-               $.getJSON(DISPLAY_URL).done(
-                  function(data)
-                  {
-                     console.log("retrieved data")
-                     var times = data.result;
-                     
-                     km_field.val(times.km);
-                     location_field.val(times.location);
-                     start_time_field.val(moment(times.start_time).format("YYYY-MM-DDTHH:mm"));
-                     brevet_dist_field.val(times.brevet_distance);
-                  }
-               );
-            }
-            */
+            $('#DISPLAY').click(
+                function (event) {
+                    event.preventDefault();
+
+                    $.getJSON(DISPLAY_URL).done(
+                        function (data) {
+                            console.log(data);
+
+                            if (data.status == 1) {
+                                console.log("Successfully fetched: ", data);
+
+                                var brevet_dist_km = $("select[id='brevet_dist_km']").val(data.result.brevet_dist_km);
+                                var start_time = $("input[name='begin_date']").val(data.result.start_time);
+                                var checkpoints = data.result.checkpoints;
+
+                                var num_checkpoints = checkpoints.length;
+                                var current_checkpoints = $('.control').length;
+
+                                console.log("Current: ", current_checkpoints);
+                                console.log("Fetched: ", num_checkpoints);
+
+                                $('.control').each(function (index) {
+                                    var checkpoint = $(this);
+
+                                    checkpoint.find("input[name='km']").val('');
+                                    checkpoint.find("input[name='miles']").val('');
+                                    checkpoint.find("input[name='location']").val('');
+                                    checkpoint.find("input[name='open']").val('');
+                                    checkpoint.find("input[name='close']").val('');
+
+                                    if (index < num_checkpoints) {
+                                        checkpoint.find("input[name='km']").val(checkpoints[index].distance);
+                                        checkpoint.find("input[name='location']").val(checkpoints[index].location);
+                                        checkpoint.find("input[name='open']").val(checkpoints[index].open_time);
+                                        checkpoint.find("input[name='close_time']").val(checkpoints[index].close_time);
+
+                                        var km = parseFloat(checkpoints[index].distance);
+                                        var miles = (0.621371 * km).toFixed(5);
+                                        console.log("Converted " + km + " km to " + miles + " miles");
+                                        var target = checkpoint.find("input[name='miles']");
+                                        target.val(miles);
+                                    }
+                                });
+                            }
+                            else {
+                                console.log("Fetch failed: ", data);
+                            }
+                        }
+                    ).fail(function (err) {
+                        console.log("Error: ", err);
+                    });
+                }
+            );
+
+            $('#SUBMIT').click(
+                function (event) {
+                    event.preventDefault();
+
+                    var brevet_dist_km = document.getElementById("brevet_dist_km").value;
+                    var start_time = document.getElementById("begin_date").value;
+
+                    var checkpoints = [];
+
+                    $('.control').each(function () {
+                        var checkpoint = $(this);
+
+                        var input_km = checkpoint.find("input[name='km']").val();
+                        var input_location = checkpoint.find("input[name='location']").val();
+                        var output_open_time = checkpoint.find("input[name='open']").val();
+                        var output_close_time = checkpoint.find("input[name='close']").val();
+
+                        if (input_km) {
+                            item_json = {
+                                "distance": input_km,
+                                "location": input_location,
+                                "open_time": output_open_time,
+                                "close_time": output_close_time
+                            };
+
+                            checkpoints.push(item_json);
+
+                            // clear out the input fields after pushing them to
+                            // the list of checkpoints
+                            checkpoint.find("input[name='km']").val('');
+                            checkpoint.find("input[name='miles']").val('');
+                            checkpoint.find("input[name='location']").val('');
+                            checkpoint.find("input[name='open']").val('');
+                            checkpoint.find("input[name='close']").val('');
+                        }
+                    });
+
+                    var new_brevet = {
+                        "brevet_dist_km": brevet_dist_km,
+                        "start_time": start_time,
+                        "checkpoints": checkpoints
+                    };
+
+                    // reset the brevet distance and start time to their default values
+                    document.getElementById("brevet_dist_km").value = "200";
+                    document.getElementById("begin_date").value = "2021-01-01T00:00";
+
+                    $.ajax({
+                        dataType: 'json',
+
+                        contentType: 'application/json',
+
+                        type: 'POST',
+
+                        url: SUBMIT_URL,
+
+                        data: JSON.stringify(new_brevet),
+
+                        success: function (data) {
+                            if (data.status == 1) {
+                                console.log("Successfully inserted! Response: ", data);
+                            }
+                            else {
+                                console.log("Insertion failed: ", data);
+                            }
+                        },
+
+                        error: function (err) {
+                            console.log("Error: ", err);
+                        }
+                    });
+                }
+            );
 
             $(document).ready(function () {
                 // Do the following when the page is finished loading
@@ -214,139 +284,6 @@
                         // Then calculate times for this entry
                         calc_times(control_entry);
                     });
-
-                $('#SUBMIT').click(
-                    function(event)
-                    {
-                        event.preventDefault();
-
-                        var brevet_dist_km = document.getElementById('brevet_dist_km').value;
-                        var start_time = document.getElementById("begin_date").value;
-
-                        var checkpoints = [];
-
-                        $('.control').each(function()
-                        {
-                            var checkpoint = $(this);
-
-                            var input_km = checkpoint.find("input[name='km']").val();
-                            var input_location = checkpoint.find("input[name='location']").val();
-
-                            if (input_km)
-                            {
-                                item_json = {
-                                    "distance": input_km,
-                                    "location": input_location
-                                };
-
-                                checkpoints.push(item_json);
-
-                                // clear out the input fields after pushing them to
-                                // the list of checkpoints
-                                checkpoint.find("input[name='km']").val('');
-                                checkpoint.find("input[name='miles']").val('');
-                                checkpoint.find("input[name='location']").val('');
-                                checkpoint.find("input[name='open']").val('');
-                                checkpoint.find("input[name='close']").val('');
-                            }
-                        });
-
-                        var new_brevet = {
-                            "brevet_dist_km": brevet_dist_km,
-                            "start_time": start_time,
-                            "checkpoints": checkpoints
-                        };
-
-                        $.ajax({
-                            dataType: 'json',
-
-                            contentType: 'application/json',
-
-                            type: 'POST',
-
-                            url: SUBMIT_URL,
-
-                            data: JSON.stringify(new_brevet),
-
-                            success: function(data)
-                            {
-                                if (data.status == 1)
-                                {
-                                    console.log("Successfully inserted! Response: ", data);
-                                }
-                                else
-                                {
-                                    console.log("Insertion failed: ", data);
-                                }
-                            },
-
-                            error: function(err)
-                            {
-                                console.log("Error: ", err);
-                            }
-                        });
-                    }
-                );
-
-                $('#DISPLAY').click(
-                    function(event)
-                    {
-                        event.preventDefault();
-
-                        $.getJSON(DISPLAY_URL).done(
-                            function(data)
-                            {
-                                console.log(data);
-
-                                if (data.status == 1)
-                                {
-                                    console.log("Successfully fetched: ", data);
-
-                                    var brevet_dist_km = $("input[id='brevet_dist_km']").val(data.result.brevet_dist_km);
-                                    var start_time = $("input[name='begin_date']").val(data.result.start_time);
-                                    var checkpoints = data.result.checkpoints;
-
-                                    var num_checkpoints = checkpoints.length;
-                                    var current_checkpoints = $('.control').length;
-
-                                    console.log("Current: ", current_checkpoints);
-                                    console.log("Fetched: ", num_checkpoints);
-
-                                    $('.control').each(function(index)
-                                    {
-                                        var checkpoint = $(this);
-
-                                        checkpoint.find("input[name='km']").val('');
-                                        checkpoint.find("input[name='miles']").val('');
-                                        checkpoint.find("input[name='location']").val('');
-
-                                        if (index < num_checkpoints)
-                                        {
-                                            checkpoint.find("input[name='km']").val(checkpoints[index].distance);
-                                            checkpoint.find("input[name='location']").val(checkpoints[index].location);
-
-                                            var km = parseFloat(checkpoints[index].distance);
-                                            var miles = (0.621371 * km).toFixed(5);
-                                            console.log("Converted " + km + " km to " + miles + " miles");
-                                            var target = checkpoint.find("input[name='miles']");
-                                            target.val(miles);
-
-                                            calc_times(checkpoint)
-                                        }
-                                    });
-                                }
-                                else
-                                {
-                                    console.log("Fetch failed: ", data);
-                                }
-                            }
-                        ).fail(function(err)
-                        {
-                            console.log("Error: ", err);
-                        });
-                    }
-                )
-
             });
 
         </script>

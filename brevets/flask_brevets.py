@@ -19,7 +19,7 @@ app = flask.Flask(__name__)
 
 API_ADDR = os.environ["API_ADDR"]
 API_PORT = os.environ["API_PORT"]
-API_URL = f"http://{API_ADDR}:{API_PORT}/api/"
+API_URL = f"http://{API_ADDR}:{API_PORT}/api"
 
 ###
 # API callers
@@ -107,12 +107,12 @@ def _submit():
 
     try:
         input_json = request.json
-        app.logger.debug("request received properly")
+        app.logger.debug("POST request received")
         
         brevet_dist_km = input_json["brevet_dist_km"]
         start_time = input_json["start_time"]
         checkpoints = input_json["checkpoints"]
-        app.logger.debug("Data assigned properly")
+        app.logger.debug("Data assigned")
 
         checkpoint_id = storeBrevets(brevet_dist_km, start_time, checkpoints)
         app.logger.debug("checkpoint id grabbed successfully")
