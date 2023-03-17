@@ -1,72 +1,38 @@
-# UOCIS322 - Project 6 #
-Brevet time calculator with MongoDB, and a RESTful API!
+# UOCIS322 - Project 5 #
+Brevet time calculator with MongoDB!
 
-Read about MongoEngine and Flask-RESTful before you start: [http://docs.mongoengine.org/](http://docs.mongoengine.org/), [https://flask-restful.readthedocs.io/en/latest/](https://flask-restful.readthedocs.io/en/latest/).
+Author:     Calvin Stewart
 
-## Before you begin
-You *HAVE TO* copy `.env-example` into `.env` and specify your container port numbers there!
-Note that the default values (5000 and 5000) will work!
-
-*DO NOT PLACE LOCAL PORTS IN YOUR COMPOSE FILE!*
+Contact:    clownvant@icloud.com
+        or
+            cstewar2@uoregon.edu
 
 ## Overview
 
-You will reuse your code from Project 5, which already has two services:
+### Display is not working!
 
-* Brevets
-	* The entire web service
-* MongoDB
+This is a python AJAX-based calculator that takes the distance of a 200km, 300km, 400km, 600km, or 1000km brevet, the brevet's start time, and the distance of a checkpoint and calculates the open and close times of the checkpoint.
 
-For this project, you will re-organize `Brevets` into two separate services:
+The JQuery watches for the user to exit the form, then takes their input and displays the open and close times in the form `YYYY-MM-DDTH:mm`.
 
-* Web (Front-end)
-	* Time calculator (basically everything you had in project 4)
-* API (Back-end)
-	* A RESTful service to expose/store structured data in MongoDB.
+This version of the calculator adds `Submit` and `Display` buttons that are supposed to store and fetch the input data from a Mongo database. This version also adds a REST API to communitcate between the python backend and the mongo database. `Submit` is supposed to clear out the input fields, and `Display` is supposed to refill the input fields with the previously stored data.
 
-## Tasks
+## How to run
 
-* Implement a RESTful API in `api/`:
-	* Write a data schema using MongoEngine for Checkpoints and Brevets:
-		* `Checkpoint`:
-			* `distance`: float, required, (checkpoint distance in kilometers), 
-			* `location`: string, optional, (checkpoint location name), 
-			* `open_time`: datetime, required, (checkpoint opening time), 
-			* `close_time`: datetime, required, (checkpoint closing time).
-		* `Brevet`:
-			* `length`: float, required, (brevet distance in kilometers),
-			* `start_time`: datetime, required, (brevet start time),
-			* `checkpoints`: list of `Checkpoint`s, required, (checkpoints).
-	* Using the schema, build a RESTful API with the resource `/brevets/`:
-		* GET `http://API:PORT/api/brevets` should display all brevets stored in the database.
-		* GET `http://API:PORT/api/brevet/ID` should display brevet with id `ID`.
-		* POST `http://API:PORT/api/brevets` should insert brevet object in request into the database.
-		* DELETE `http://API:PORT/api/brevet/ID` should delete brevet with id `ID`.
-		* PUT `http://API:PORT/api/brevet/ID` should update brevet with id `ID` with object in request.
+In the home directory of the project, run the following command to set up the docker images and run the calculator. The `--build` tag forces the container to rebuild, which will be helpful if you have an older version of this project on your system. You may add the `-d` flag if you want to disconnect docker's prompting from your terminal. 
 
-* Copy over `brevets/` from your completed project 5.
-	* Replace every database related code in `brevets/` with calls to the new API.
-		* Remember: AutoGrader will ensure there is NO CONNECTION between `brevets` and `db` services. `brevets` should only operate through `api` and still function the way it did in project 5.
-		* Hint: Submit should send a POST request to the API to insert, Display should send a GET request, and display the last entry.
-	* Remove `config.py` and adjust `flask_brevets.py` to use the `PORT` and `DEBUG` values specified in env variables (see `docker-compose.yml`).
+```
+docker-compose up --build
+```
 
-* Update README.md with API documentation added.
+To connect to the calculator, open up your browser and go to `localhost:5001`. If you would like to  Play around with it as much as you want, and let me know if you find any issues.
 
-As always you'll turn in your `credentials.ini` through Canvas.
+If you haven't disconnected your terminal from the internal containers, hitting `Crtl+C` will stop the containers. It will leave the outside container still running, but the program will not run anymore.
 
-## Grading Rubric
+To stop and disable every container in the project, type in the following command. 
 
-* If your code works as expected: 100 points. This includes:
-    * API routes as outlined above function exactly the way expected,
-    * Web application works as expected in project 5,
-    * README is updated with the necessary details.
+```
+docker-compose down
+```
 
-* If the front-end service does not work, 20 points will be docked.
-
-* For each of the 5 requests that do not work, 15 points will be docked.
-
-* If none of the above work, 5 points will be assigned assuming project builds and runs, and `README` is updated. Otherwise, 0 will be assigned.
-
-## Authors
-
-Michal Young, Ram Durairajan. Updated by Ali Hassani.
+This will also stop the external container, killing the program entirely. 
